@@ -7,7 +7,7 @@ A drop-in GitHub Actions workflow that adds three automated security checks to a
 | Check | Tool | Catches |
 |---|---|---|
 | Secret scanning | Gitleaks | API keys, tokens and passwords committed to the repository, including history |
-| Static analysis (SAST) | Semgrep | Insecure code patterns and common vulnerability classes |
+| Static analysis (SAST) | Semgrep | Insecure code patterns, common vulnerability classes and risky workflow configuration |
 | Vulnerabilities and misconfiguration | Trivy | Known vulnerabilities in dependencies, plus infrastructure-as-code misconfigurations |
 
 The workflow runs on pushes to main, on pull requests, and on demand.
@@ -20,15 +20,16 @@ The workflow runs on pushes to main, on pull requests, and on demand.
 
 ## Design choices
 
+- **Pinned actions:** every third-party action is pinned to a full commit SHA instead of a mutable version tag. In March 2026 attackers rewrote the version tags of the widely used trivy-action to steal credentials from CI pipelines, and pinning is the recommended defence against that class of attack. Semgrep also flags mutable tags, which is how this template's own first version was caught.
 - **Least privilege:** the workflow token has read-only access to repository contents.
 - **Fail the build:** Semgrep and Trivy return a failing status when they find issues, so problems are visible.
 - **Fixable first:** Trivy reports only HIGH and CRITICAL findings that have a fix available, to keep noise down.
 
-## Hardening tips
+## Maintaining it
 
-- Pin actions to a full commit SHA instead of a version tag to reduce supply-chain risk.
-- Tune severity thresholds and rules to your risk appetite.
-- Add a software bill of materials (SBOM) step and dependency review for pull requests.
+- Review pinned SHAs periodically. Dependabot can open pull requests to update GitHub Actions.
+- trivy-action is pinned to v0.35.0, a release the vendor and GitHub advisory list as safe after the March 2026 incident. Review newer releases and verify the commit before upgrading.
+- Tune severity thresholds and rules to your risk appetite, and consider adding an SBOM step and dependency review for pull requests.
 
 ## Notes
 
